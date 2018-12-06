@@ -131,6 +131,32 @@ func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, p ht
 	fmt.Fprintf(w, "%s", uj)
 }
 
+func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	db := getSession()
+	defer db.Close()
+	// Stub an user to be populated from the body
+	u := models.User{}
+
+	// Populate the user data
+	json.NewDecoder(r.Body).Decode(&u)
+
+	in, err := db.Prepare(`UPDATE Users SET Name=?, Age=? WHERE Id=?`)
+	if err != nil {
+		panic(err.Error())
+	}
+	name := r.FormValue("name")
+	id := r.FormValue("id")
+	age := r.FormValue("age")
+	in.Exec(name, age, id)
+	// Marshal provided interface into JSON structure
+	uj, _ := json.Marshal(u)
+
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	fmt.Fprintf(w, "%s", uj)
+}
+
 // RemoveUser removes an existing user resource
 func (uc UserController) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	db := getSession()
