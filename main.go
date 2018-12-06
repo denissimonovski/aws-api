@@ -17,6 +17,7 @@ func main() {
 
 	// Get a user resource
 	r.GET("/user/:id", uc.GetUser)
+
 	r.GET("/user", uc.GetAllUser)
 
 	r.POST("/user", uc.CreateUser)
@@ -28,10 +29,9 @@ func main() {
 }
 
 func getSession() *sql.DB {
-	// Connect to our local mongo
+	// Connect to docker mysql
 	db, err := sql.Open("mysql", "root:supersecret@tcp(172.17.0.2:3306)/banka")
 
-	// Check if connection error, is mongo running?
 	if err != nil {
 		panic(err)
 	}
