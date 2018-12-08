@@ -136,7 +136,7 @@ func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p ht
 	defer db.Close()
 	// Stub an user to be populated from the body
 	u := models.User{}
-
+	id := p.ByName("id")
 	// Populate the user data
 	json.NewDecoder(r.Body).Decode(&u)
 
@@ -145,7 +145,6 @@ func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p ht
 		panic(err.Error())
 	}
 	name := r.FormValue("name")
-	id := r.FormValue("id")
 	age := r.FormValue("age")
 	in.Exec(name, age, id)
 	// Marshal provided interface into JSON structure

@@ -24,6 +24,8 @@ func main() {
 
 	r.DELETE("/user/:id", uc.RemoveUser)
 
+	r.POST("/user/:id", uc.UpdateUser)
+
 	// Fire up the server
 	http.ListenAndServe(":3000", r)
 }
