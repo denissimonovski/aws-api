@@ -164,7 +164,7 @@ func (uc UserController) RemoveUser(w http.ResponseWriter, r *http.Request, p ht
 	// Grab id
 	id := p.ByName("id")
 
-	selDB, err := db.Prepare(`DELETE * FROM Users WHERE id=?`)
+	selDB, err := db.Prepare(`DELETE FROM Users WHERE id=?`)
 	if err != nil {
 		panic(err.Error())
 	}
