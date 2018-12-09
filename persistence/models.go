@@ -1,4 +1,4 @@
-package models
+package persistence
 
 type (
 	// User represents the structure of our resource
@@ -6,6 +6,6 @@ type (
 		Name   string `json:"name"`
 		Gender string `json:"gender"`
 		Age    int    `json:"age"`
-		Id     string `json:"id"`
+		Id     int    `json:"id"`
 	}
 )

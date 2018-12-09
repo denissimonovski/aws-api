@@ -2,7 +2,8 @@ package main
 
 import (
 	"aws-api/controllers"
-	"database/sql"
+	"aws-api/persistence/dblayer"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -13,8 +14,11 @@ func main() {
 	r := httprouter.New()
 
 	// Get a UserController instance
-	uc := controllers.NewUserController(getSession())
-
+	dbhandle, err := dblayer.NewPersistenceLayer(dblayer.MYSQLDB, "root:supersecret@tcp(172.17.0.2:3306)/banka")
+	if err != nil {
+		fmt.Printf("Can't connect to db: %s", err.Error())
+	}
+	uc := controllers.NewEventHandler(dbhandle)
 	// Get a user resource
 	r.GET("/user/:id", uc.GetUser)
 
@@ -28,14 +32,4 @@ func main() {
 
 	// Fire up the server
 	http.ListenAndServe(":3000", r)
-}
-
-func getSession() *sql.DB {
-	// Connect to docker mysql
-	db, err := sql.Open("mysql", "root:supersecret@tcp(172.17.0.2:3306)/banka")
-
-	if err != nil {
-		panic(err)
-	}
-	return db
 }

@@ -1,8 +1,7 @@
 package controllers
 
 import (
-	"aws-api/models"
-	"database/sql"
+	"aws-api/persistence"
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -10,55 +9,24 @@ import (
 	"strconv"
 )
 
-type (
-	// UserController represents the controller for operating on the User resource
-	UserController struct {
-		session *sql.DB
-	}
-)
-
-func getSession() *sql.DB {
-	// Connect to our local mongo
-	db, err := sql.Open("mysql", "root:supersecret@tcp(172.17.0.2:3306)/banka")
-
-	// Check if connection error, is mongo running?
-	if err != nil {
-		panic(err)
-	}
-	return db
+type eventServiceHandler struct {
+	dbhandler persistence.DatabaseHandler
 }
 
-func NewUserController(s *sql.DB) *UserController {
-	return &UserController{s}
+func NewEventHandler(databasehandler persistence.DatabaseHandler) *eventServiceHandler {
+	return &eventServiceHandler{
+		dbhandler: databasehandler,
+	}
 }
 
 // GetUser retrieves an individual user resource
-func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	db := getSession()
-	defer db.Close()
+func (eh *eventServiceHandler) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Grab id
 	id := p.ByName("id")
 
-	// Stub user
-	u := models.User{}
-
-	// Fetch user
-	selDB, err := db.Query("SELECT * FROM Users WHERE id=?", id)
+	u, err := eh.dbhandler.GetUser(StoI(id))
 	if err != nil {
 		panic(err.Error())
-	}
-
-	for selDB.Next() {
-		var id, age int
-		var name, gender string
-		err = selDB.Scan(&id, &name, &gender, &age)
-		if err != nil {
-			panic(err.Error())
-		}
-		u.Id = strconv.Itoa(id)
-		u.Name = name
-		u.Gender = gender
-		u.Age = age
 	}
 	// Marshal provided interface into JSON structure
 	uj, _ := json.Marshal(u)
@@ -69,31 +37,10 @@ func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httpr
 	fmt.Fprintf(w, "%s", uj)
 }
 
-func (uc UserController) GetAllUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	db := getSession()
-	defer db.Close()
-	// Stub user
-	us := []models.User{}
-
-	// Fetch user
-	selDB, err := db.Query("SELECT * FROM Users")
+func (eh *eventServiceHandler) GetAllUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	us, err := eh.dbhandler.GetAllUsers()
 	if err != nil {
 		panic(err.Error())
-	}
-
-	for selDB.Next() {
-		u := models.User{}
-		var id, age int
-		var name, gender string
-		err = selDB.Scan(&id, &name, &gender, &age)
-		if err != nil {
-			panic(err.Error())
-		}
-		u.Id = strconv.Itoa(id)
-		u.Name = name
-		u.Gender = gender
-		u.Age = age
-		us = append(us, u)
 	}
 	// Marshal provided interface into JSON structure
 	uj, _ := json.Marshal(us)
@@ -105,23 +52,21 @@ func (uc UserController) GetAllUser(w http.ResponseWriter, r *http.Request, p ht
 }
 
 // CreateUser creates a new user resource
-func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	db := getSession()
-	defer db.Close()
-	// Stub an user to be populated from the body
-	u := models.User{}
+func (eh *eventServiceHandler) CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-	// Populate the user data
-	json.NewDecoder(r.Body).Decode(&u)
-
-	in, err := db.Prepare(`INSERT INTO Users(Name, Gender, Age) VALUES(?,?,?)`)
-	if err != nil {
-		panic(err.Error())
-	}
 	name := r.FormValue("name")
 	gender := r.FormValue("gender")
 	age := r.FormValue("age")
-	in.Exec(name, gender, age)
+	uid, err := eh.dbhandler.AddUser(name, gender, StoI(age))
+	if err != nil {
+		panic(err.Error())
+	}
+	u := persistence.User{
+		Id:     int(uid),
+		Name:   name,
+		Gender: gender,
+		Age:    StoI(age),
+	}
 	// Marshal provided interface into JSON structure
 	uj, _ := json.Marshal(u)
 
@@ -131,22 +76,17 @@ func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, p ht
 	fmt.Fprintf(w, "%s", uj)
 }
 
-func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	db := getSession()
-	defer db.Close()
-	// Stub an user to be populated from the body
-	u := models.User{}
-	id := p.ByName("id")
-	// Populate the user data
-	json.NewDecoder(r.Body).Decode(&u)
+func (eh *eventServiceHandler) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-	in, err := db.Prepare(`UPDATE Users SET Name=?, Age=? WHERE Id=?`)
+	id := p.ByName("id")
+	//json.NewDecoder(r.Body).Decode(&u)
+	name := r.FormValue("name")
+	age := r.FormValue("age")
+	err := eh.dbhandler.UpdateUser(StoI(id), StoI(age), name)
 	if err != nil {
 		panic(err.Error())
 	}
-	name := r.FormValue("name")
-	age := r.FormValue("age")
-	in.Exec(name, age, id)
+	u, _ := eh.dbhandler.GetUser(StoI(id))
 	// Marshal provided interface into JSON structure
 	uj, _ := json.Marshal(u)
 
@@ -157,17 +97,21 @@ func (uc UserController) UpdateUser(w http.ResponseWriter, r *http.Request, p ht
 }
 
 // RemoveUser removes an existing user resource
-func (uc UserController) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	db := getSession()
-	defer db.Close()
+func (eh *eventServiceHandler) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
 	// Grab id
 	id := p.ByName("id")
 
-	selDB, err := db.Prepare(`DELETE FROM Users WHERE id=?`)
-	if err != nil {
-		panic(err.Error())
-	}
-	selDB.Exec(id)
+	eh.dbhandler.DeleteUser(StoI(id))
 	fmt.Println("DELETED")
 	w.WriteHeader(200)
+}
+
+func StoI(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err.Error())
+		return 0
+	}
+	return i
 }
