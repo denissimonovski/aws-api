@@ -18,7 +18,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("Can't connect to db: %s", err.Error())
 	}
-	uc := controllers.NewEventHandler(dbhandle)
+	uc := controllers.NewUserHandler(dbhandle)
 	// Get a user resource
 	r.GET("/user/:id", uc.GetUser)
 

@@ -9,18 +9,18 @@ import (
 	"strconv"
 )
 
-type eventServiceHandler struct {
+type userServiceHandler struct {
 	dbhandler persistence.DatabaseHandler
 }
 
-func NewEventHandler(databasehandler persistence.DatabaseHandler) *eventServiceHandler {
-	return &eventServiceHandler{
+func NewUserHandler(databasehandler persistence.DatabaseHandler) *userServiceHandler {
+	return &userServiceHandler{
 		dbhandler: databasehandler,
 	}
 }
 
 // GetUser retrieves an individual user resource
-func (eh *eventServiceHandler) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (eh *userServiceHandler) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Grab id
 	id := p.ByName("id")
 
@@ -37,7 +37,7 @@ func (eh *eventServiceHandler) GetUser(w http.ResponseWriter, r *http.Request, p
 	fmt.Fprintf(w, "%s", uj)
 }
 
-func (eh *eventServiceHandler) GetAllUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (eh *userServiceHandler) GetAllUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	us, err := eh.dbhandler.GetAllUsers()
 	if err != nil {
 		panic(err.Error())
@@ -52,7 +52,7 @@ func (eh *eventServiceHandler) GetAllUser(w http.ResponseWriter, r *http.Request
 }
 
 // CreateUser creates a new user resource
-func (eh *eventServiceHandler) CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (eh *userServiceHandler) CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 	name := r.FormValue("name")
 	gender := r.FormValue("gender")
@@ -76,7 +76,7 @@ func (eh *eventServiceHandler) CreateUser(w http.ResponseWriter, r *http.Request
 	fmt.Fprintf(w, "%s", uj)
 }
 
-func (eh *eventServiceHandler) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (eh *userServiceHandler) UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 	id := p.ByName("id")
 	//json.NewDecoder(r.Body).Decode(&u)
@@ -97,7 +97,7 @@ func (eh *eventServiceHandler) UpdateUser(w http.ResponseWriter, r *http.Request
 }
 
 // RemoveUser removes an existing user resource
-func (eh *eventServiceHandler) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (eh *userServiceHandler) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 	// Grab id
 	id := p.ByName("id")
