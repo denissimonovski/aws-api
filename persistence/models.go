@@ -1,7 +1,7 @@
 package persistence
 
 type (
-	// User represents the structure of our resource
+	// User e novo definiran resurs
 	User struct {
 		Name   string `json:"name"`
 		Gender string `json:"gender"`

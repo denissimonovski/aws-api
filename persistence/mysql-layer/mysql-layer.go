@@ -11,7 +11,7 @@ type MySqlLayer struct {
 
 func NewMySqlLayer(connection string) (persistence.DatabaseHandler, error) {
 	db, err := sql.Open("mysql", connection)
-	// Check if connection error, is mysql running?
+	// Proverka na konekcija
 	return &MySqlLayer{
 		session: db,
 	}, err
@@ -69,7 +69,6 @@ func (mySqlLayer *MySqlLayer) GetAllUsers() ([]persistence.User, error) {
 
 	us := []persistence.User{}
 
-	// Fetch users
 	selDB, err := db.Query("SELECT * FROM Users")
 	if err != nil {
 		return nil, err
@@ -119,7 +118,7 @@ func (mySqlLayer *MySqlLayer) UpdateUser(uid, age int, name string) (err error) 
 
 func (mySqlLayer *MySqlLayer) getSession() *sql.DB {
 	db, err := sql.Open("mysql", "root:supersecret@tcp(172.17.0.2:3306)/banka")
-	// Check if connection error, is mongo running?
+	// Proverka na konekcija
 	if err != nil {
 		panic(err)
 	}

@@ -10,14 +10,15 @@ import (
 )
 
 func main() {
-	// Instantiate a new router
+	// Iniciranje na nov ruter
 	r := httprouter.New()
 
-	// Get a UserController instance
+	// Iniciranje sesija do baza
 	dbhandle, err := dblayer.NewPersistenceLayer(dblayer.MYSQLDB, "root:supersecret@tcp(172.17.0.2:3306)/banka")
 	if err != nil {
 		fmt.Printf("Can't connect to db: %s", err.Error())
 	}
+	// Iniciranje na kontroler za korisnici
 	uc := controllers.NewUserHandler(dbhandle)
 	// Get a user resource
 	r.GET("/user/:id", uc.GetUser)
@@ -30,6 +31,6 @@ func main() {
 
 	r.POST("/user/:id", uc.UpdateUser)
 
-	// Fire up the server
+	// Start na server
 	http.ListenAndServe(":3000", r)
 }
